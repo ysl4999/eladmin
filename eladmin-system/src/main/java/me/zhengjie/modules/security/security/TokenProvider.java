@@ -71,9 +71,13 @@ public class TokenProvider implements InitializingBean {
      * @return /
      */
     public String createToken(Authentication authentication) {
+        Map<String,Object> map = new HashMap<>(10);
+        map.put("id","645b98d95cce276f87d7f40b");
+        map.put("role","TERMINAL_SUPER_ADMIN");
         return jwtBuilder
                 // 加入ID确保生成的 Token 都不一致
                 .setId(IdUtil.simpleUUID())
+                .setClaims(map)
                 .claim(AUTHORITIES_KEY, authentication.getName())
                 .setSubject(authentication.getName())
                 .compact();
