@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.security.config.bean.SecurityProperties;
 import me.zhengjie.utils.RedisUtils;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
@@ -46,6 +47,9 @@ public class TokenProvider implements InitializingBean {
     public static final String AUTHORITIES_KEY = "user";
     private JwtParser jwtParser;
     private JwtBuilder jwtBuilder;
+
+    @Value("${jwt.base64-secret}")
+    private String signingKey;
 
     public TokenProvider(SecurityProperties properties, RedisUtils redisUtils) {
         this.properties = properties;
@@ -71,14 +75,23 @@ public class TokenProvider implements InitializingBean {
      * @return /
      */
     public String createToken(Authentication authentication) {
+        //指定签名的时候使用的签名算法
+        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+
         Map<String,Object> map = new HashMap<>(10);
         map.put("id","645b98d95cce276f87d7f40b");
-        map.put("role","TERMINAL_SUPER_ADMIN");
+        map.put(AUTHORITIES_KEY,authentication.getName());
+
+        //生成JWT的时间
+        Date now = new Date(System.currentTimeMillis());
+
         return jwtBuilder
                 // 加入ID确保生成的 Token 都不一致
-                .setId(IdUtil.simpleUUID())
+//                .setId(IdUtil.simpleUUID())
+//                .claim(AUTHORITIES_KEY, authentication.getName())
                 .setClaims(map)
-                .claim(AUTHORITIES_KEY, authentication.getName())
+                .setIssuedAt(now)
+                .signWith(signatureAlgorithm, signingKey)
                 .setSubject(authentication.getName())
                 .compact();
     }
